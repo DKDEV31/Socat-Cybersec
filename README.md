@@ -345,7 +345,6 @@ It remember ! I put the flags in my chest, it's on a nfs share, how do i list th
 ```
 
 Nous avons donc le premier véritable indice: NFS.
-Ainsi un scan NMAP devrait nous aider dans cette tache.
 
 ###NFS
 Une commande "showmount" nous informera sur la localisation.
@@ -399,6 +398,15 @@ drwxr-xr-x 3 kali kali 4096 Dec  2 10:45 ..
 -rw-r--r-- 1 kali kali  736 Dec  2 10:41 id_rsa.pub
 ```
 On trouve donc le flag.txt
+
+### User.txt
+
+Le contenu du coffre comporte des clés SSH. La connection SSH est donc possible grace à la commande
+```
+ssh -i id_rsa user@XXX.XXX.XX.XX -p XXXX
+```
+
+Le port 22 n'est malheureusement pas le port par défaut. Il s'agit en réalité du port 5555.
 
 
 
