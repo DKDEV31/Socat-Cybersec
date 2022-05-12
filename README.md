@@ -23,7 +23,44 @@ Nmap done: 1 IP address (1 host up) scanned in 38.15 seconds
   - 80 - SSH
   - 22 - http
 - Dirbuster
-  - navigation
+  - Report
+  - 
+  ```
+  DirBuster 1.0-RC1 - Report
+  http://www.owasp.org/index.php/Category:OWASP_DirBuster_Project
+  Report produced on Thu May 12 09:57:34 EDT 2022
+  --------------------------------
+  
+  http://10.10.93.150:80
+  --------------------------------
+  Directories found during testing:
+  
+  Dirs found with a 200 response:
+
+  /img/
+  /
+  /t/
+  /t/o/
+  /t/o/s/
+  /t/o/s/s/
+  /t/o/s/s/_/
+  /t/o/s/s/_/a/
+  /t/o/s/s/_/a/_/
+  /t/o/s/s/_/a/_/c/
+  /t/o/s/s/_/a/_/c/o/
+  /t/o/s/s/_/a/_/c/o/i/
+  /t/o/s/s/_/a/_/c/o/i/n/
+
+  ```
+  
+  La suite se devine d'après les lyrics de la chanson:
+  ```
+  http://10.10.190.15/t/o/s/s/_/a/_/c/o/i/n/_/t/o/_/y/o/u/r/_/w/i/t/c/h/e/r/_/o/h/_/v/a/l/l/e/y/_/o/f/_/p/l/e/n/t/y/
+  ```
+  Sur la page, en explorant avec F12 on accède à un mot de passe: 
+  ```
+  jaskier:YouHaveTheMostIncredibleNeckItsLikeASexyGoose
+  ```
 - SSH - Jaskier
 - User.txtc
 - Yen
