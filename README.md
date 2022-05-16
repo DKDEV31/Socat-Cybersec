@@ -408,6 +408,22 @@ ssh -i id_rsa user@XXX.XXX.XX.XX -p XXXX
 
 Le port 22 n'est malheureusement pas le port par défaut. Il s'agit en réalité du port 5555.
 
+Nous lançons donc `ssh -i id_rsa isaac@<IP> -p 5555` et nous arrivons sur un terminal ruby à ce moment la il suffit de taper la commande `exec /bin/bash` pour tomber sur le terminal bash d'Isaac.
+
+Il nous reste à taper la commande `cat user.txt` pour afficher le token.
+
+### Token root.txt
+
+Pour obtenir le token nous listons les executables qui ont des capacitées spécifiques grâce à la commande `getcap -r / 2>/dev/null`. On voit que deux fichiers ressorte: 
+  - /usr/bin/mtr-packet = cap_net_raw+ep
+  - /bin/tar = cap_dac_read_search+ep
+Celui qui nous intéresse est le deuxieme qui nous permet d'écraser les permissions d'executions et de lecture des fichiers.
+
+Il est donc possible de compresser les fichiers contenu dans root puis de les decompresser et de les afficher. 
+
+Pour ce faire il suffit de lancer la commande `tar -cvf root.tar /root`, poour compresser l'archive. Ensuite il suffit de lancer la commande `tar -xf root.tar` pour décompresser ce dernier et obtenir les fichiers contenu dans l'archive. 
+
+Ensuite on change de fichier et on se met dans l'archive decompressé pour lister le contenu auxquel nous avons maintenant accés. Un petit `cat root.txt` nous affiche le flag. 
 ## WriteUp Dalgona
 
 Un premier scan NMAP nous informe que tous les ports sont ouverts, ce qui rend l'analyse difficile.
